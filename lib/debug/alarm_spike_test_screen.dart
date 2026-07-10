@@ -4,11 +4,38 @@ import 'package:flutter/material.dart';
 import 'package:alarm/alarm.dart';
 import 'package:permission_handler/permission_handler.dart';
 
-class AlarmSpikeTestScreen extends StatelessWidget {
+import 'full_screen_intent_service.dart';
+
+class AlarmSpikeTestScreen extends StatefulWidget {
   const AlarmSpikeTestScreen({super.key});
 
+  @override
+  State<AlarmSpikeTestScreen> createState() => _AlarmSpikeTestScreenState();
+}
+
+class _AlarmSpikeTestScreenState extends State<AlarmSpikeTestScreen> {
+  final _fullScreenIntentService = FullScreenIntentService();
+  late Future<bool> _fullScreenIntentAllowed;
+
+  @override
+  void initState() {
+    super.initState();
+    _fullScreenIntentAllowed =
+        _fullScreenIntentService.canUseFullScreenIntent();
+  }
+
+  void _refreshFullScreenIntentStatus() {
+    setState(() {
+      _fullScreenIntentAllowed =
+          _fullScreenIntentService.canUseFullScreenIntent();
+    });
+  }
+
+  Future<void> _openFullScreenIntentSettings() async {
+    await _fullScreenIntentService.openFullScreenIntentSettings();
+  }
+
   Future<void> _scheduleTestAlarm(BuildContext context) async {
-    // Android 13+ requires notification permission
     final notificationStatus = await Permission.notification.status;
     if (notificationStatus.isDenied) {
       await Permission.notification.request();
@@ -66,6 +93,41 @@ class AlarmSpikeTestScreen extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            FutureBuilder<bool>(
+              future: _fullScreenIntentAllowed,
+              builder: (context, snapshot) {
+                final allowed = snapshot.data;
+                final statusText = allowed == null
+                    ? 'Checking full-screen intent permission...'
+                    : allowed
+                        ? 'Full-screen intent: allowed'
+                        : 'Full-screen intent: blocked';
+
+                return Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+                  child: Column(
+                    children: [
+                      Text(statusText, textAlign: TextAlign.center),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 8,
+                        alignment: WrapAlignment.center,
+                        children: [
+                          OutlinedButton(
+                            onPressed: _refreshFullScreenIntentStatus,
+                            child: const Text('Refresh status'),
+                          ),
+                          OutlinedButton(
+                            onPressed: _openFullScreenIntentSettings,
+                            child: const Text('Open settings'),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
             const Padding(
               padding: EdgeInsets.all(24),
               child: Text(
