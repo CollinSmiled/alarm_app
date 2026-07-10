@@ -21,6 +21,7 @@ class AppColors {
   static const char = Color(0xFF14171C); // alert-state background
   static const signal = Color(0xFFD62828); // dismiss-screen accent only
   static const moss = Color(0xFF4C7A5D); // step-progress indicator
+  static const steel = Color(0xFF3D6B8C); // barcode accent
 }
 
 class AppTypography {
