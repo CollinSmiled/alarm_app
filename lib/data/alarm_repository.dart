@@ -22,6 +22,11 @@ class AlarmRepository {
     return _db.update(_db.alarms).replace(alarm);
   }
 
+  Future<int> updateAlarmFields(int id, AlarmsCompanion alarm) {
+    return (_db.update(_db.alarms)..where((a) => a.id.equals(id)))
+        .write(alarm);
+  }
+
   /// Delete an alarm by id
   Future<int> deleteAlarm(int id) {
     return (_db.delete(_db.alarms)..where((a) => a.id.equals(id))).go();
@@ -37,6 +42,32 @@ class AlarmRepository {
 
   Future<int> insertBarcode(BarcodesCompanion barcode) {
     return _db.into(_db.barcodes).insert(barcode);
+  }
+
+  Future<Barcode?> findBarcodeByValue(String value) {
+    return (_db.select(_db.barcodes)..where((b) => b.value.equals(value)))
+        .getSingleOrNull();
+  }
+
+  Future<int> getOrCreateBarcode(String value, {String label = ''}) async {
+    final existing = await findBarcodeByValue(value);
+    if (existing != null) return existing.id;
+
+    return insertBarcode(
+      BarcodesCompanion.insert(
+        value: value,
+        label: Value(label.isEmpty ? value : label),
+      ),
+    );
+  }
+
+  Future<void> renameBarcode(int id, String label) {
+    return (_db.update(_db.barcodes)..where((b) => b.id.equals(id)))
+        .write(BarcodesCompanion(label: Value(label)));
+  }
+
+  Future<int> deleteBarcode(int id) {
+    return (_db.delete(_db.barcodes)..where((b) => b.id.equals(id))).go();
   }
 
   Stream<List<Barcode>> watchAllBarcodes() {

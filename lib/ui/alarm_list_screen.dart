@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:drift/drift.dart' show Value;
 
 import '../data/database.dart';
 import '../data/alarm_repository.dart';
+import '../settings/app_settings.dart';
 import '../theme/app_theme.dart';
-
-const _dayLetters = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+import '../utils/time_formatter.dart';
+import 'alarm_edit_screen.dart';
+import 'widgets/day_selector.dart';
 
 class AlarmListScreen extends StatelessWidget {
   const AlarmListScreen({super.key});
@@ -16,10 +17,11 @@ class AlarmListScreen extends StatelessWidget {
     final repository = context.read<AlarmRepository>();
 
     return Scaffold(
+      backgroundColor: AppColors.fog,
       appBar: AppBar(
-        title: Text('Alarms', style: AppTypography.display(color: AppColors.ink, size: 20)),
         backgroundColor: AppColors.fog,
         elevation: 0,
+        title: Text('Alarms', style: AppTypography.display(color: AppColors.ink, size: 20)),
       ),
       body: StreamBuilder<List<Alarm>>(
         stream: repository.watchAllAlarms(),
@@ -28,10 +30,7 @@ class AlarmListScreen extends StatelessWidget {
 
           if (alarms.isEmpty) {
             return Center(
-              child: Text(
-                'No alarms yet. Tap + to add one.',
-                style: AppTypography.body(color: AppColors.slate),
-              ),
+              child: Text('No alarms yet. Tap + to add one.', style: AppTypography.body(color: AppColors.slate)),
             );
           }
 
@@ -40,28 +39,24 @@ class AlarmListScreen extends StatelessWidget {
             itemCount: alarms.length,
             itemBuilder: (context, index) {
               final alarm = alarms[index];
-              return _AlarmCard(
-                alarm: alarm,
-                onToggle: (value) => repository.setAlarmEnabled(alarm.id, value),
+              return GestureDetector(
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => AlarmEditScreen(existing: alarm)),
+                ),
+                child: _AlarmCard(
+                  alarm: alarm,
+                  onToggle: (value) => repository.setAlarmEnabled(alarm.id, value),
+                ),
               );
             },
           );
         },
       ),
-      backgroundColor: AppColors.fog,
       floatingActionButton: FloatingActionButton(
         backgroundColor: AppColors.ink,
-        onPressed: () {
-          final now = DateTime.now();
-          final testMinute = ((now.hour * 60) + now.minute + 1) % 1440;
-
-          repository.insertAlarm(
-            AlarmsCompanion.insert(
-              triggerMinuteOfDay: testMinute,
-              label: const Value('Test alarm'),
-            ),
-          );
-        },
+        onPressed: () => Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const AlarmEditScreen()),
+        ),
         child: const Icon(Icons.add, color: AppColors.fog),
       ),
     );
@@ -76,9 +71,8 @@ class _AlarmCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Desaturate everything when the alarm is off — "off" should be
-    // unambiguous at a glance, not just a smaller toggle state.
     final activeColor = alarm.isEnabled ? AppColors.ink : AppColors.slate;
+    final settings = context.watch<AppSettings>();
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -99,20 +93,17 @@ class _AlarmCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    _formatTime(alarm.triggerMinuteOfDay),
+                    formatMinuteOfDay(
+                      alarm.triggerMinuteOfDay,
+                      use24HourTime: settings.use24HourTime,
+                    ),
                     style: AppTypography.display(color: activeColor, size: 34),
                   ),
                   const SizedBox(height: 4),
-                  Text(
-                    alarm.label.isEmpty ? 'No label' : alarm.label,
-                    style: AppTypography.body(color: activeColor, size: 13),
-                  ),
+                  Text(alarm.label.isEmpty ? 'No label' : alarm.label, style: AppTypography.body(color: activeColor, size: 13)),
                 ],
               ),
-              Switch(
-                value: alarm.isEnabled,
-                onChanged: onToggle,
-              ),
+              Switch(value: alarm.isEnabled, onChanged: onToggle),
             ],
           ),
           const SizedBox(height: 12),
@@ -124,15 +115,7 @@ class _AlarmCard extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  children: List.generate(7, (i) {
-                    final isActiveDay = (alarm.repeatDaysMask & (1 << i)) != 0;
-                    return Padding(
-                      padding: const EdgeInsets.only(right: 6),
-                      child: _DayChip(letter: _dayLetters[i], active: isActiveDay),
-                    );
-                  }),
-                ),
+                DaySelector(selectedMask: alarm.repeatDaysMask, onChanged: (_) {}, readOnly: true),
                 _DismissMethodTag(dismissType: alarm.dismissType, stepTarget: alarm.stepTarget),
               ],
             ),
@@ -142,40 +125,6 @@ class _AlarmCard extends StatelessWidget {
     );
   }
 
-  String _formatTime(int minuteOfDay) {
-    final hours = minuteOfDay ~/ 60;
-    final minutes = (minuteOfDay % 60).toString().padLeft(2, '0');
-    return '$hours:$minutes';
-  }
-}
-
-class _DayChip extends StatelessWidget {
-  final String letter;
-  final bool active;
-
-  const _DayChip({required this.letter, required this.active});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 22,
-      height: 22,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: active ? AppColors.ink : Colors.transparent,
-        border: active ? null : Border.all(color: AppColors.slate, width: 0.5),
-      ),
-      child: Center(
-        child: Text(
-          letter,
-          style: AppTypography.mono(
-            color: active ? AppColors.fog : AppColors.slate,
-            size: 10,
-          ),
-        ),
-      ),
-    );
-  }
 }
 
 class _DismissMethodTag extends StatelessWidget {
@@ -200,10 +149,7 @@ class _DismissMethodTag extends StatelessWidget {
           children: [
             const Icon(Icons.directions_walk, size: 16, color: AppColors.moss),
             const SizedBox(width: 4),
-            Text(
-              '${stepTarget ?? 0} steps',
-              style: AppTypography.body(color: AppColors.moss, size: 11),
-            ),
+            Text('${stepTarget ?? 0} steps', style: AppTypography.body(color: AppColors.moss, size: 11)),
           ],
         );
       case DismissType.none:

@@ -40,6 +40,8 @@ dependencies:
   provider: ^6.1.2
   alarm: ^5.1.5
   permission_handler: ^12.0.0
+  mobile_scanner: 6.0.10
+  shared_preferences: ^2.3.2
 
 dev_dependencies:
   flutter_test:
