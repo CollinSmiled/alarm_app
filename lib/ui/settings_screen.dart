@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../settings/app_settings.dart';
 import '../theme/app_theme.dart';
+import 'widgets/page_header.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -11,24 +12,100 @@ class SettingsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.fog,
-      appBar: AppBar(
-        backgroundColor: AppColors.fog,
-        elevation: 0,
-        title: Text(
-          'Settings',
-          style: AppTypography.display(color: AppColors.ink, size: 20),
-        ),
-      ),
-      body: ListView(
-        padding: const EdgeInsets.all(20),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const _SettingsRow(
-            icon: Icons.volume_up_outlined,
-            label: 'Default alarm sound',
+          const SafeArea(
+            bottom: false,
+            child: PageHeader(title: 'Settings'),
           ),
-          const _SettingsRow(icon: Icons.vibration, label: 'Vibration'),
-          _TimeFormatRow(),
-          const _SettingsRow(icon: Icons.info_outline, label: 'About'),
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(20, 2, 20, 20),
+              children: [
+                _SettingsSection(
+                  title: 'Alarm',
+                  children: const [
+                    _SettingsRow(
+                      icon: Icons.volume_up_outlined,
+                      label: 'Default alarm sound',
+                      value: 'Default',
+                    ),
+                    _SettingsRow(
+                      icon: Icons.vibration,
+                      label: 'Vibration',
+                      value: 'On',
+                    ),
+                  ],
+                ),
+                _SettingsSection(
+                  title: 'Time',
+                  children: [_TimeFormatRow()],
+                ),
+                const _SettingsSection(
+                  title: 'Permissions',
+                  children: [
+                    _SettingsRow(
+                      icon: Icons.camera_alt_outlined,
+                      label: 'Camera',
+                      value: 'Required for barcode',
+                    ),
+                    _SettingsRow(
+                      icon: Icons.alarm_on_outlined,
+                      label: 'Exact alarms',
+                      value: 'Required',
+                    ),
+                    _SettingsRow(
+                      icon: Icons.open_in_full_outlined,
+                      label: 'Full-screen alerts',
+                      value: 'Required',
+                    ),
+                  ],
+                ),
+                const _SettingsSection(
+                  title: 'About',
+                  children: [
+                    _SettingsRow(
+                      icon: Icons.info_outline,
+                      label: 'Version',
+                      value: '0.1.0',
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SettingsSection extends StatelessWidget {
+  final String title;
+  final List<Widget> children;
+
+  const _SettingsSection({required this.title, required this.children});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(left: 2, bottom: 8),
+            child: Text(
+              title,
+              style: AppTypography.body(
+                color: AppColors.slate,
+                size: 12,
+                weight: FontWeight.w500,
+              ),
+            ),
+          ),
+          ...children,
         ],
       ),
     );
@@ -83,8 +160,9 @@ class _TimeFormatRow extends StatelessWidget {
 class _SettingsRow extends StatelessWidget {
   final IconData icon;
   final String label;
+  final String? value;
 
-  const _SettingsRow({required this.icon, required this.label});
+  const _SettingsRow({required this.icon, required this.label, this.value});
 
   @override
   Widget build(BuildContext context) {
@@ -100,10 +178,17 @@ class _SettingsRow extends StatelessWidget {
         children: [
           Icon(icon, size: 20, color: AppColors.slate),
           const SizedBox(width: 12),
-          Text(
-            label,
-            style: AppTypography.body(color: AppColors.ink, size: 14),
+          Expanded(
+            child: Text(
+              label,
+              style: AppTypography.body(color: AppColors.ink, size: 14),
+            ),
           ),
+          if (value != null)
+            Text(
+              value!,
+              style: AppTypography.body(color: AppColors.slate, size: 12),
+            ),
         ],
       ),
     );

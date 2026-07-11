@@ -33,27 +33,25 @@ class _MainShellState extends State<MainShell> {
             top: BorderSide(color: Color(0xFFD3D2C9), width: 0.5),
           ),
         ),
-        padding: const EdgeInsets.symmetric(vertical: 10),
+        padding: const EdgeInsets.fromLTRB(0, 8, 0, 2),
         child: SafeArea(
           top: false,
+          minimum: const EdgeInsets.only(bottom: 4),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               _NavItem(
                 icon: Icons.alarm,
-                label: 'Alarms',
                 active: _index == 0,
                 onTap: () => setState(() => _index = 0),
               ),
               _NavItem(
                 icon: Icons.qr_code_2,
-                label: 'Barcodes',
                 active: _index == 1,
                 onTap: () => setState(() => _index = 1),
               ),
               _NavItem(
                 icon: Icons.settings_outlined,
-                label: 'Settings',
                 active: _index == 2,
                 onTap: () => setState(() => _index = 2),
               ),
@@ -67,38 +65,31 @@ class _MainShellState extends State<MainShell> {
 
 class _NavItem extends StatelessWidget {
   final IconData icon;
-  final String label;
   final bool active;
   final VoidCallback onTap;
 
   const _NavItem({
     required this.icon,
-    required this.label,
     required this.active,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    final color = active ? AppColors.moss : AppColors.slate;
+    final iconColor = active ? AppColors.fog : AppColors.slate;
 
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 24, color: color),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: AppTypography.body(
-              color: color,
-              size: 11,
-              weight: active ? FontWeight.w500 : FontWeight.w400,
-            ),
-          ),
-        ],
+      child: Container(
+        width: 72,
+        height: 42,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: active ? AppColors.ink : Colors.transparent,
+          borderRadius: BorderRadius.circular(24),
+        ),
+        child: Icon(icon, size: 25, color: iconColor),
       ),
     );
   }
