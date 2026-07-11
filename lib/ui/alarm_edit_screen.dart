@@ -6,6 +6,7 @@ import '../data/database.dart';
 import '../data/alarm_repository.dart';
 import '../settings/app_settings.dart';
 import '../theme/app_theme.dart';
+import '../utils/repeat_formatter.dart';
 import '../utils/time_formatter.dart';
 import 'widgets/day_selector.dart';
 import 'widgets/dismiss_method_selector.dart';
@@ -151,7 +152,16 @@ class _AlarmEditScreenState extends State<AlarmEditScreen> {
             ),
             const Divider(color: Color(0xFFD3D2C9), height: 24),
             Text('Repeat', style: AppTypography.body(color: AppColors.slate, size: 12)),
-            const SizedBox(height: 10),
+            const SizedBox(height: 4),
+            Text(
+              formatRepeatSummary(_repeatMask),
+              style: AppTypography.body(
+                color: _repeatMask == 0 ? AppColors.ink : AppColors.moss,
+                size: 14,
+                weight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 12),
             DaySelector(
               selectedMask: _repeatMask,
               onChanged: (mask) => setState(() => _repeatMask = mask),

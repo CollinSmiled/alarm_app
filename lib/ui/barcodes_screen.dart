@@ -5,6 +5,7 @@ import '../data/alarm_repository.dart';
 import '../data/database.dart';
 import '../theme/app_theme.dart';
 import 'widgets/dismiss_method_selector.dart';
+import 'widgets/page_header.dart';
 
 class BarcodesScreen extends StatelessWidget {
   const BarcodesScreen({super.key});
@@ -82,98 +83,102 @@ class BarcodesScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: AppColors.fog,
-      appBar: AppBar(
-        backgroundColor: AppColors.fog,
-        elevation: 0,
-        title: Text(
-          'Barcodes',
-          style: AppTypography.display(color: AppColors.ink, size: 20),
-        ),
-      ),
       body: StreamBuilder<List<Barcode>>(
         stream: repository.watchAllBarcodes(),
         builder: (context, snapshot) {
           final barcodes = snapshot.data ?? [];
 
-          if (barcodes.isEmpty) {
-            return Center(
-              child: Text(
-                'No barcodes registered yet.',
-                style: AppTypography.body(color: AppColors.slate),
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SafeArea(
+                bottom: false,
+                child: const PageHeader(title: 'Barcodes'),
               ),
-            );
-          }
+              Expanded(
+                child: barcodes.isEmpty
+                    ? Center(
+                        child: Text(
+                          'No barcodes registered yet.',
+                          style: AppTypography.body(color: AppColors.slate),
+                        ),
+                      )
+                    : ListView.builder(
+                        padding: const EdgeInsets.fromLTRB(16, 2, 16, 16),
+                        itemCount: barcodes.length,
+                        itemBuilder: (context, index) {
+                          final barcode = barcodes[index];
+                          final label = barcode.label.isEmpty
+                              ? barcode.value
+                              : barcode.label;
 
-          return ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: barcodes.length,
-            itemBuilder: (context, index) {
-              final barcode = barcodes[index];
-              final label = barcode.label.isEmpty ? barcode.value : barcode.label;
-
-              return Container(
-                margin: const EdgeInsets.only(bottom: 10),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 14,
-                ),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF5F5F1),
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                    color: const Color(0xFFD3D2C9),
-                    width: 0.5,
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(
-                      Icons.qr_code_2,
-                      size: 20,
-                      color: AppColors.steel,
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            label,
-                            style: AppTypography.body(
-                              color: AppColors.ink,
-                              size: 14,
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 10),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 14,
                             ),
-                          ),
-                          Text(
-                            barcode.value,
-                            style: AppTypography.mono(
-                              color: AppColors.slate,
-                              size: 11,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF5F5F1),
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(
+                                color: const Color(0xFFD3D2C9),
+                                width: 0.5,
+                              ),
                             ),
-                          ),
-                        ],
+                            child: Row(
+                              children: [
+                                const Icon(
+                                  Icons.qr_code_2,
+                                  size: 20,
+                                  color: AppColors.steel,
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        label,
+                                        style: AppTypography.body(
+                                          color: AppColors.ink,
+                                          size: 14,
+                                        ),
+                                      ),
+                                      Text(
+                                        barcode.value,
+                                        style: AppTypography.mono(
+                                          color: AppColors.slate,
+                                          size: 11,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                IconButton(
+                                  icon: const Icon(
+                                    Icons.edit_outlined,
+                                    size: 18,
+                                    color: AppColors.slate,
+                                  ),
+                                  onPressed: () => _rename(context, barcode),
+                                ),
+                                IconButton(
+                                  icon: const Icon(
+                                    Icons.delete_outline,
+                                    size: 18,
+                                    color: AppColors.slate,
+                                  ),
+                                  onPressed: () => _delete(context, barcode),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
                       ),
-                    ),
-                    IconButton(
-                      icon: const Icon(
-                        Icons.edit_outlined,
-                        size: 18,
-                        color: AppColors.slate,
-                      ),
-                      onPressed: () => _rename(context, barcode),
-                    ),
-                    IconButton(
-                      icon: const Icon(
-                        Icons.delete_outline,
-                        size: 18,
-                        color: AppColors.slate,
-                      ),
-                      onPressed: () => _delete(context, barcode),
-                    ),
-                  ],
-                ),
-              );
-            },
+              ),
+            ],
           );
         },
       ),
